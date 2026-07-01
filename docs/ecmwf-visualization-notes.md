@@ -17,22 +17,5 @@ Reference link: https://www.ecmwf.int/en/computing/software/ecmwf-web-api
 * **How can NetCDF or GRIB be converted into map layers or tiles?**
     * Web browsers and MapLibre cannot natively read scientific, multidimensional NetCDF or GRIB files, hence a **tool** is needed first in order to extract the data it can read. Along with ECMWF, GDAL can also be used for a **pre-processing approach**, wherein it is used to extract specific variables or time steps from NetCDF or GRIB and convert them into GeoTIFFs or COGs. Afterwards, they are passed to tiling utilities, which cut the data into discrete, fast-loading image tiles (XYZ tiles) or vector files (MBTiles) that the frontend can easily ingest.
 * **What is the easiest prototype path for SDD?**
-    * ```text
-    ECMWF API
-        │
-        ▼
-    GRIB/NetCDF
-        │
-        ▼
-    GDAL (or other geospatial tools)
-        │
-        ▼
-    GeoTIFFs/COGs/GeoJSON
-        │
-        ▼
-    Django
-        │
-        ▼
-    React + MapLibre
-    ```
+    * ECMWF -> GRIB/NetCDF -> GDAL (or other geospatial tools) -> GeoTIFFs/COGs/GeoJSON -> Django -> React + MapLibre
         * This setup allows the fewest changes to the present frontend.
