@@ -14,6 +14,7 @@ Reference link: https://gpm.nasa.gov/data/visualization/precip-apps
 * **Is there a public tile service, WMS, WMTS, XYZ endpoint, or API endpoint?**
     * The PMM Precipitation & Applications Viewer identifies itself as a demonstration of the PMM Publisher API. However, the linked "API" pages **do not provide conventional REST API documentation**.
     * Inspection of the application's network traffic shows that precipitation layers are retrieved as **publicly accessible PNG image resources** hosted on `pmmpublisher.pps.eosdis.nasa.gov`. No JSON-based REST API, standard XYZ tile service, or documented WMS/WMTS endpoint was identified from the viewer itself.
+    ![NASA GPM Network Traffic](nasa_gpm_response.png)
     * The application appears to construct image URLs for different datasets, dates, and time intervals rather than querying a JSON service.
 * **Can it be added directly to MapLibre?**
     * **Potentially**, but not directly based on the available documentation. The viewer retrieves precipitation imagery as PNG files, but no documented MapLibre-compatible tile service (e.g., XYZ or WMTS) was identified.
@@ -33,7 +34,7 @@ Reference link: https://gpm.nasa.gov/data/visualization/precip-apps
 * **What spatial resolution is available?**
     * According to `gpm.nasa.gov`, "For our popular multi-satellite GPM IMERG data products, the spatial resolution is **0.1° x 0.1° (or roughly 10km x 10km)** with a 30 minute temporal resolution".
 * **What is the update frequency?**
-    * IMERG Near Real-Time precipitation estimates are updated approximately **every half-hour**, although publication may occur shortly after each observation period.
+    * According to `gpm.nasa.gov`, IMERG Near Real-Time precipitation estimates are updated approximately **every half-hour**, although publication may occur shortly after each observation period.
 * **Can the data be filtered or clipped to the Philippines?**
     * Yes. Since the datasets are global, the application can limit the displayed region to the Philippines **by controlling the map extent**.
 * **What is the easiest first visualization approach?**
