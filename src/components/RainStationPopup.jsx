@@ -6,7 +6,7 @@ function RainStationPopup({ station }) {
       <h3>{station.stationName}</h3>
 
       <div className="popup-row">
-        <strong>Rainfall:</strong>
+        <strong>Rainfall (3h):</strong>
         <span>{station.rainfallMm} mm</span>
       </div>
 

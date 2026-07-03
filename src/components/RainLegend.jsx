@@ -3,10 +3,10 @@ import "../styles/App.css";
 function RainLegend() {
   const categories = [
     { color: "#d6eaf8", label: "No observed rain (0 mm)" },
-    { color: "#aed6f1", label: "Light rainfall (1–10 mm)" },
-    { color: "#5dade2", label: "Moderate rainfall (10–25 mm)" },
-    { color: "#2874a6", label: "Heavy rainfall (25–50 mm)" },
-    { color: "#154360", label: "Very heavy rainfall (>50 mm)" },
+    { color: "#00e100", label: "Light rainfall (1–10 mm)" },
+    { color: "#ffff00", label: "Moderate rainfall (10–25 mm)" },
+    { color: "#ffaa00", label: "Heavy rainfall (25–50 mm)" },
+    { color: "#ff0000", label: "Very heavy rainfall (>50 mm)" },
   ];
 
   return (

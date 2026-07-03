@@ -22,7 +22,7 @@ function MapView({ stations, footprints }) {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: "https://demotiles.maplibre.org/style.json",
+      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
       center: [121.774, 12.8797],
       zoom: 5,
     });
@@ -104,13 +104,13 @@ function MapView({ stations, footprints }) {
             "step",
             ["get", "rainfallMm"],
             "#d6eaf8",
-            1, "#aed6f1",
-            10, "#5dade2",
-            25, "#2874a6",
-            50, "#154360"
+            1, "#00e100",
+            10, "#ffff00",
+            25, "#ffaa00",
+            50, "#ff0000"
           ],
           "circle-opacity": 1,
-          "circle-stroke-width": 2.5,
+          "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff"
         }
 
@@ -186,10 +186,10 @@ function MapView({ stations, footprints }) {
               "step",
               ["coalesce", ["get", "averageRainfall"], 0],
               "#eef7ff",
-              1, "#cfe8ff",
-              10, "#7db7ff",
-              25, "#3182bd",
-              50, "#08519c"
+              1, "#00e100",
+              10, "#ffff00",
+              25, "#ffaa00",
+              50, "#ff0000"
             ],
             "fill-opacity": 0.30
           },
@@ -262,10 +262,10 @@ function MapView({ stations, footprints }) {
             ["coalesce", ["get", "averageRainfall"], 0],
 
             "#eef7ff",
-            1, "#cfe8ff",
-            10, "#7db7ff",
-            25, "#3182bd",
-            50, "#08519c"
+            1, "#00e100",
+            10, "#ffff00",
+            25, "#ffaa00",
+            50, "#ff0000"
           ]
         );
 

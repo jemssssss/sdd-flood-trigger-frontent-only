@@ -23,3 +23,19 @@ export function getLatestForecastTime() {
 
   return `${year}-${month}-${day}T${hour}:00:00`;
 }
+
+export function getLatestTimeDate() {
+  const now = new Date();
+
+  // Round down
+  now.setMinutes(0);
+  now.setSeconds(0);
+  now.setMilliseconds(0);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hour = String(now.getHours()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hour}:00:00`;
+}

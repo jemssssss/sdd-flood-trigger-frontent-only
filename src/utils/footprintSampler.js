@@ -1,7 +1,7 @@
 import * as turf from "@turf/turf";
 import { fetchPointRainfall } from "../services/panahonApi";
 
-const SAMPLE_POINTS = 5;
+const SAMPLE_POINTS = 7;
 
 export async function sampleFootprint(feature, forecastTime) {
 

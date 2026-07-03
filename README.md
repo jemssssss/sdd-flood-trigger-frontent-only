@@ -299,6 +299,7 @@ Each popup displays:
 
 - Tile number
 - Average sampled rainfall (mm)
+- Observation time
 
 ---
 
@@ -328,17 +329,6 @@ Clicking a rainfall station displays:
 - Observation time
 - Latitude
 - Longitude
-
----
-
-# Footprint Popups
-
-Clicking a Sentinel-1 footprint displays:
-
-- Tile number
-- Average rainfall (mm)
-
-If a rainfall station overlaps a footprint, the rainfall station popup takes priority.
 
 ---
 
