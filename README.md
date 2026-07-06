@@ -1,6 +1,6 @@
 # Space Data Dashboard (SDD) Flood Trigger
 
-A web-based rainfall visualization dashboard built with **React**, **Vite**, and **MapLibre GL JS**. The application retrieves rainfall observations from the **Panahon API**, visualizes rainfall stations across the Philippines, and computes the average forecast rainfall within Sentinel-1 footprint polygons using pre-generated sampling points.
+A web-based rainfall visualization dashboard built with **React**, **Vite**, and **MapLibre GL JS**. The application retrieves both **Synoptic Station** and **Automatic Weather Station (AWS)** rainfall observations from the **Panahon API**, visualizes them as interactive map layers, and computes the average forecast rainfall within Sentinel-1 footprint polygons using pre-generated sampling points.
 
 ![SDD Flood Trigger Preview](/docs/dashboard_preview.png)
 
@@ -13,14 +13,19 @@ A web-based rainfall visualization dashboard built with **React**, **Vite**, and
 # Features
 
 - Interactive MapLibre map centered on the Philippines
-- Displays observed rainfall stations from the Panahon API
+- Displays Synoptic Station rainfall observations (3-hour accumulated rainfall)
+- Displays AWS rainfall observations (24-hour accumulated rainfall)
+- Layer control panel for toggling:
+  - Synoptic Stations
+  - AWS Stations
+  - Sentinel-1 Footprints
 - Displays Sentinel-1 footprint polygons
 - Computes average forecast rainfall for every footprint
-- Uses pre-generated sampling points for consistent rainfall averaging
-- Parallel rainfall sampling for improved loading performance
+- Uses pre-generated sampling points for reproducible rainfall averaging
+- Parallel rainfall sampling using `Promise.all()`
 - Color-coded rainfall stations
 - Color-coded footprint polygons
-- Interactive rainfall station popups
+- Interactive station popups
 - Interactive footprint popups
 - Rainfall legend
 - Loading, error, and empty states
@@ -70,7 +75,7 @@ cd sdd-flood-trigger
 
 # Environment Variables
 
-Create a `.env` file in the project root.
+Create a `.env` file.
 
 ```env
 VITE_PANAHON_API_TOKEN=YOUR_API_TOKEN
@@ -88,7 +93,7 @@ Ensure `.env` is ignored.
 .env
 ```
 
-A sample `.env.example` file may be committed.
+A sample `.env.example` may be committed.
 
 ```env
 VITE_PANAHON_API_TOKEN=
@@ -108,8 +113,6 @@ npm install
 
 # Running the Application
 
-Start the development server.
-
 ```bash
 npm run dev
 ```
@@ -124,17 +127,17 @@ http://localhost:5173
 
 # Deploying to GitHub Pages
 
-Build and deploy the application.
+Deploy using:
 
 ```bash
 npm run deploy
 ```
 
-The project is configured to deploy from the `gh-pages` branch.
+The project is configured to deploy from the **gh-pages** branch.
 
 > **Note**
 >
-> Because this project currently runs entirely in the frontend, the Panahon API token is bundled into the production build. For production deployments, API requests should ideally be proxied through a backend service.
+> Since this application currently performs API requests entirely on the frontend, the Panahon API token is included in the production bundle. A backend proxy is recommended for production deployments.
 
 ---
 
@@ -148,10 +151,16 @@ public/
 
 src/
 ├── components/
+│   ├── map/
+│   │   ├── footprintLayer.jsx
+│   │   └── stationLayer.jsx
+│   │
+│   ├── LayerControl.jsx
 │   ├── FootprintPopup.jsx
 │   ├── MapView.jsx
 │   ├── RainLegend.jsx
-│   └── RainStationPopup.jsx
+│   ├── StationLayer.jsx
+│   └── StationPopup.jsx
 │
 ├── services/
 │   └── panahonApi.js
@@ -175,169 +184,129 @@ src/
 # Application Workflow
 
 ```text
-                     Panahon API
-                          │
-        ┌─────────────────┴──────────────────┐
-        │                                    │
-        ▼                                    ▼
- /api/v1/synop                     /api/v1/tiles/point
-        │                                    ▲
-        ▼                                    │
- fetchRainSynop()             Pre-generated Sample Points
-        │                                    │
-        ▼                                    │
- parseRainStations()                         │
-        │                                    │
-        ▼                                    │
- Rainfall Stations            Average Rainfall per Footprint
-        └─────────────────────┬──────────────┘
-                              │
-                              ▼
-                           App.jsx
-                              │
-                              ▼
-                          MapView.jsx
-                              │
-                              ▼
-                 MapLibre GL JS Visualization
+                    Panahon API
+                         │
+      ┌──────────────────┼──────────────────┐
+      │                  │                  │
+      ▼                  ▼                  ▼
+ /api/v1/synop      /api/v1/aws      /api/v1/tiles/point
+      │                  │                  ▲
+      ▼                  ▼                  │
+ parseRainStations() parseAWSStations() Sample Points
+      │                  │                  │
+      ▼                  ▼                  │
+ Synoptic Layer      AWS Layer      Average Footprint Rainfall
+      └──────────────────┬──────────────────┘
+                         │
+                         ▼
+                      App.jsx
+                         │
+                         ▼
+                     MapView.jsx
+                         │
+                         ▼
+                  MapLibre GL JS Map
 ```
 
 ---
 
 # Panahon API Integration
 
-## Rainfall Stations
+## Synoptic Stations
 
-Observed rainfall stations are retrieved using:
+Observed rainfall stations:
 
 ```text
-https://www.panahon.gov.ph/api/v1/synop?token=<TOKEN>&parameter=rain
+/api/v1/synop?parameter=rain
 ```
+
+Represents **3-hour accumulated rainfall**.
+
+---
+
+## Automatic Weather Stations (AWS)
+
+Observed AWS stations:
+
+```text
+/api/v1/aws?parameter=accumulated_rain_1h
+```
+
+Although the endpoint returns hourly rainfall, this dashboard visualizes the **24_hr_value** field.
 
 ---
 
 ## Forecast Rainfall Sampling
 
-Forecast rainfall values are retrieved from:
+Forecast rainfall is retrieved from:
 
 ```text
-https://www.panahon.gov.ph/api/v1/tiles/point?url=prate&t=<YYYY-MM-DDTHH:00:00>&lat=<latitude>&lon=<longitude>&token=<TOKEN>
+/api/v1/tiles/point
 ```
 
-Each request requires:
+using:
 
 - latitude
 - longitude
-- forecast timestamp (`t`)
+- forecast timestamp
 - API token
 
-The forecast timestamp is generated automatically using `timeUtils.js`.
+Forecast timestamps are generated automatically using `timeUtils.js`.
 
 ---
 
-# Raw API Response
+# Rainfall Station Types
 
-Example rainfall station response.
+## Synoptic Stations
 
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "site_id": "132",
-      "site_name": "ITBAYAT, BATANES",
-      "lat": "20.79000758",
-      "lon": "121.8396475",
-      "value": "0",
-      "parameter": "rain",
-      "observed_at": "2026-06-30 14:00:00",
-      "readable_parameter": "3 Hourly Rain",
-      "readable_unit": "mm"
-    }
-  ]
-}
-```
+Visualized using:
+
+- `value`
+- 3-hour rainfall
+- rainfall station popup
 
 ---
 
-# Normalized Rainfall Station Object
+## AWS Stations
 
-```javascript
-{
-  id: "132",
-  stationName: "ITBAYAT, BATANES",
-  latitude: 20.79000758,
-  longitude: 121.8396475,
-  rainfallMm: 0,
-  observedAt: "2026-06-30 14:00:00",
-  raw: { ... }
-}
-```
+Visualized using:
 
----
-
-# API Field Mapping
-
-| Panahon API | Parsed Field | Description |
-|-------------|--------------|-------------|
-| site_id | id | Station identifier |
-| site_name | stationName | Station name |
-| lat | latitude | Latitude |
-| lon | longitude | Longitude |
-| value | rainfallMm | Rainfall amount (millimeters) |
-| observed_at | observedAt | Observation timestamp |
-
-The original API object is preserved in the `raw` property.
-
----
-
-# Rainfall Station Visualization
-
-Stations are rendered as MapLibre circle layers.
-
-Both circle size and color represent rainfall intensity.
-
-| Rainfall (mm) | Category |
-|--------------:|----------|
-| 0 | No observed rain |
-| 1–10 | Light rainfall |
-| 10–25 | Moderate rainfall |
-| 25–50 | Heavy rainfall |
-| >50 | Very heavy rainfall |
+- `24_hr_value`
+- 24-hour accumulated rainfall
+- identical popup layout
 
 ---
 
 # Sentinel-1 Footprints
 
-Sentinel-1 acquisition footprints are loaded from a GeoJSON dataset.
+Sentinel-1 acquisition footprints are loaded from:
+
+```
+public/data/s1a_footprints.geojson
+```
 
 Each footprint:
 
-- is rendered as a polygon
-- is colored by average forecast rainfall
-- can be clicked to display additional information
-
-Each popup displays:
-
-- Tile number
-- Average rainfall (mm)
+- displays average forecast rainfall
+- is color-coded
+- supports interactive popups
 
 ---
 
 # Sampling Points
 
-Instead of generating random sampling points every time the application starts, each footprint uses a fixed set of pre-generated sample coordinates stored in:
+Each footprint uses pre-generated sample coordinates stored in:
 
-```text
+```
 public/data/footprintSamplePoints.json
 ```
 
-Advantages include:
+Advantages:
 
-- Consistent rainfall calculations
-- Faster startup
-- Reproducible results
-- Easy to increase sampling density in the future
+- deterministic results
+- improved performance
+- reproducible averages
+- easy increase in sampling density
 
 ---
 
@@ -345,32 +314,53 @@ Advantages include:
 
 For every footprint:
 
-1. Load its predefined sampling points.
-2. Request forecast rainfall for each point.
-3. Execute all point requests in parallel.
+1. Load predefined sample points.
+2. Fetch rainfall at every point.
+3. Execute requests concurrently.
 4. Compute the arithmetic mean.
-5. Store the result as:
+5. Store as:
 
 ```javascript
 feature.properties.averageRainfall
 ```
 
-The average rainfall is then used for:
+---
 
-- polygon coloring
-- popup information
+# Layer Controls
+
+The dashboard includes a control panel that allows users to independently toggle:
+
+- Synoptic Stations
+- AWS Stations
+- Sentinel-1 Footprints
+
+Layer visibility is managed using MapLibre's `layout.visibility` property without reloading map sources.
 
 ---
 
-# Rainfall Station Popups
+# Station Popups
 
-Clicking a rainfall station displays:
+Clicking either a Synoptic or AWS station displays:
 
 - Station name
 - Rainfall amount
 - Observation time
 - Latitude
 - Longitude
+
+The rainfall label automatically changes depending on station type:
+
+- Synoptic → **Rainfall (3h)**
+- AWS → **Rainfall (24h)**
+
+---
+
+# Footprint Popups
+
+Clicking a Sentinel-1 footprint displays:
+
+- Tile Number
+- Average Forecast Rainfall (mm)
 
 ---
 
@@ -388,12 +378,12 @@ The application provides feedback during data retrieval.
 
 - React manages application state.
 - MapLibre GL JS renders all spatial layers.
-- Turf.js was used to generate the initial sampling points.
-- Sampling points are reused across application runs.
-- Rainfall station data are normalized before visualization.
-- Forecast rainfall is retrieved from the Panahon gridded rainfall endpoint.
-- Footprint rainfall requests are executed concurrently using `Promise.all()`.
-- Forecast timestamps are generated dynamically using `timeUtils.js`.
+- Layer rendering has been modularized into dedicated map layer components.
+- Turf.js generated the initial sampling points.
+- Sampling points are reused between application runs.
+- Forecast rainfall requests execute concurrently using `Promise.all()`.
+- Forecast timestamps are generated dynamically.
+- API responses are normalized before visualization.
 - Environment variables are accessed using `import.meta.env`.
 
 ---
@@ -406,10 +396,10 @@ The application provides feedback during data retrieval.
 Missing VITE_PANAHON_API_TOKEN
 ```
 
-Verify that:
+Verify:
 
 - `.env` exists
-- `VITE_PANAHON_API_TOKEN` is defined
+- the token is defined
 - the development server has been restarted
 
 ---
@@ -417,43 +407,45 @@ Verify that:
 ## Style is not done loading
 
 ```
-Style is not done loading.
+Style is not done loading
 ```
 
-Sources and layers should only be added after the MapLibre style has finished loading.
+Ensure MapLibre sources and layers are only added after the map's `load` event.
 
 ---
 
-## No Rainfall Stations Displayed
+## GitHub Pages Displays a Blank Page
 
 Verify:
 
-- the API token is valid
-- the Panahon API request succeeds
-- parsed stations contain valid coordinates
-- browser Developer Tools report no errors
-
----
-
-## Footprint Rainfall Values Look Incorrect
-
-Verify that:
-
-- the generated forecast timestamp matches the most recent available dataset
-- the sampling points file contains valid coordinates
-- the Panahon forecast endpoint returns valid rainfall values
-
----
-
-## GitHub Pages Shows a Blank Page or 404 Errors
-
-Verify that:
-
-- `vite.config.js` uses the correct `base` path matching the repository name
-- static assets are referenced using `import.meta.env.BASE_URL`
+- `vite.config.js` contains the correct `base` path
+- assets use `import.meta.env.BASE_URL`
 - GitHub Pages is configured to deploy from the `gh-pages` branch
-- the application has been rebuilt and redeployed using:
+- redeploy using:
 
 ```bash
 npm run deploy
 ```
+
+---
+
+## No Stations Displayed
+
+Verify:
+
+- the API token is valid
+- the Panahon API requests succeed
+- valid coordinates are returned
+- browser Developer Tools report no JavaScript errors
+
+---
+
+## Incorrect Footprint Rainfall
+
+Verify:
+
+- the generated forecast timestamp matches the latest available forecast
+- `footprintSamplePoints.json` contains valid coordinates
+- the Panahon forecast endpoint returns valid values
+
+---
