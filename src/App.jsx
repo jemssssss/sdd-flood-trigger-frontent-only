@@ -1,16 +1,21 @@
 import "./styles/App.css";
 import MapView from "./components/MapView";
+import LayerControl from "./components/LayerControl";
 import RainLegend from "./components/RainLegend";
 import { useEffect, useState } from "react";
-import { fetchRainSynop } from "./services/panahonApi"
+import { fetchRainSynop, fetchAWSRain } from "./services/panahonApi";
 import { parseRainStations } from "./utils/rainParser";
 import { sampleFootprint } from "./utils/footprintSampler";
 import { getLatestForecastTime } from "./utils/timeUtils";
 
 function App() {
 
-  const [stations, setStations] = useState([]);
+  const [synopticStations, setSynopticStations] = useState([]);
+  const [awsStations, setAwsStations] = useState([]);
   const [footprints, setFootprints] = useState(null);
+  const [showSynoptic, setShowSynoptic] = useState(true);
+  const [showAWS, setShowAWS] = useState(true);
+  const [showFootprints, setShowFootprints] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -24,14 +29,25 @@ function App() {
       setError(null);
 
       try {
-        /* Load rainfall stations */
-        const response = await fetchRainSynop();
+        /* Load synoptic and AWS rainfall stations */
+        const [ synopticResponse, awsResponse ] = await Promise.all([ fetchRainSynop(), fetchAWSRain() ]);
 
-        const parsedStations = parseRainStations(response);
+        const parsedSynoptic = parseRainStations(
+            synopticResponse,
+            "synoptic"
+          );
 
-        console.table(parsedStations);
+        const parsedAWS =
+          parseRainStations(
+            awsResponse,
+            "aws"
+          );
 
-        setStations(parsedStations);
+        console.table(parsedSynoptic);
+        console.table(parsedAWS);
+
+        setSynopticStations(parsedSynoptic);
+        setAwsStations(parsedAWS);
 
         /* Load polygons/footprints */
         const footprintResponse = await fetch(`${import.meta.env.BASE_URL}/data/s1a_footprints.geojson`);
@@ -133,19 +149,42 @@ function App() {
           </div>
         )}
 
-        {!loading && !error && stations.length === 0 && (
+        {!loading && !error && synopticStations.length === 0 && awsStations.length === 0 && (
           <div className="status-message">
             No rainfall stations available.
           </div>
         )}
 
-        {!loading && !error && stations.length > 0 && (
+        {!loading && !error && synopticStations.length > 0 && awsStations.length > 0 && (
           <>
-            <MapView 
-              stations={stations}
-              footprints={footprints} 
+            <LayerControl
+
+              showSynoptic={showSynoptic}
+              setShowSynoptic={setShowSynoptic}
+
+              showAWS={showAWS}
+              setShowAWS={setShowAWS}
+
+              showFootprints={showFootprints}
+              setShowFootprints={setShowFootprints}
+
             />
-            <RainLegend />
+
+            <MapView
+
+              synopticStations={synopticStations}
+              awsStations={awsStations}
+
+              showSynoptic={showSynoptic}
+              showAWS={showAWS}
+              showFootprints={showFootprints}
+
+              footprints={footprints}
+
+            />
+
+            <RainLegend/>
+
           </>
         )}
       </main>

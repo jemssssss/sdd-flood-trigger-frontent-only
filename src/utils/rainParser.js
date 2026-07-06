@@ -1,21 +1,31 @@
-export function parseRainStations(rawData) {
+export function parseRainStations(rawData, type = "synoptic") {
+
   const items = Array.isArray(rawData)
     ? rawData
     : rawData?.data || rawData?.results || [];
 
   return items
     .map((item, index) => {
+
       const latitude = Number(item.latitude ?? item.lat);
       const longitude = Number(item.longitude ?? item.lon ?? item.lng);
-      const rainfallMm = Number(
-        item.rain ?? item.rainfall ?? item.value ?? 0
-      );
 
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
         return null;
       }
 
+      // Synoptic = 3-hour rainfall
+      // AWS = 24-hour rainfall
+      const rainfallMm =
+        type === "aws"
+          ? Number(item["24_hr_value"] ?? 0)
+          : Number(item.value ?? 0);
+
       return {
+
         id:
           item.id ??
           item.site_id ??
@@ -27,10 +37,11 @@ export function parseRainStations(rawData) {
           item.site_name ??
           item.station_name ??
           item.name ??
-          "Unknown station",
+          "Unknown Station",
 
         latitude,
         longitude,
+
         rainfallMm,
 
         observedAt:
@@ -40,8 +51,17 @@ export function parseRainStations(rawData) {
           item.timestamp ??
           null,
 
-        raw: item,
+        readableUnit:
+          item.readable_unit ??
+          "mm",
+
+        stationType: type,
+
+        raw: item
+
       };
+
     })
     .filter(Boolean);
+
 }

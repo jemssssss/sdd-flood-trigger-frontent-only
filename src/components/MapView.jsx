@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import RainStationPopup from "./RainStationPopup";
+import StationLayer from "./StationLayer";
+import StationPopup from "./StationPopup";
 import FootprintPopup from "./FootprintPopup";
 import maplibregl from "maplibre-gl";
 import bbox from "@turf/bbox";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-function MapView({ stations, footprints }) {
+function MapView({ synopticStations, awsStations, showSynoptic, showAWS, footprints, showFootprints }) {
   /* Map general settings */
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -43,13 +44,9 @@ function MapView({ stations, footprints }) {
     });
   }, []);
 
-  /* Rendered rainfall stations*/
-  // Update rainfall layer whenever stations change
-  useEffect(() => {
-    if (!map.current) return;
-
-    // Obtain parameters
-    const geojson = {
+  // helper function
+  function buildStationGeoJSON(stations) {
+    return {
       type: "FeatureCollection",
       features: stations.map((station) => ({
         type: "Feature",
@@ -60,101 +57,163 @@ function MapView({ stations, footprints }) {
           observedAt: station.observedAt,
           latitude: station.latitude,
           longitude: station.longitude,
+          stationType: station.stationType,
         },
         geometry: {
           type: "Point",
-          coordinates: [station.longitude, station.latitude],
-        },
-      })),
-    };
-
-    const updateRainfallLayer = () => {
-
-      if (map.current.getSource("rainfall")) {
-        map.current.getSource("rainfall").setData(geojson);
-
-        // Always keep rainfall stations above polygons
-        if (map.current.getLayer("rainfall-layer")) {
-          map.current.moveLayer("rainfall-layer");
+          coordinates: [
+            station.longitude,
+            station.latitude
+          ]
         }
-
-        return;
-      }
-
-      map.current.addSource("rainfall", {
-        type: "geojson",
-        data: geojson,
-      });
-
-      map.current.addLayer({
-        id: "rainfall-layer",
-        type: "circle",
-        source: "rainfall",
-        paint: {
-          "circle-radius": [
-            "step",
-            ["get", "rainfallMm"],
-            5,
-            1, 7,
-            10, 9,
-            25, 11,
-            50, 13
-          ],
-          "circle-color": [
-            "step",
-            ["get", "rainfallMm"],
-            "#d6eaf8",
-            1, "#00e100",
-            10, "#ffff00",
-            25, "#ffaa00",
-            50, "#ff0000"
-          ],
-          "circle-opacity": 1,
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#ffffff"
-        }
-
-      });
-
-      map.current.on("click", "rainfall-layer", (e) => {
-        e.originalEvent.stopPropagation();
-
-        const feature = e.features[0];
-        const popupNode = document.createElement("div");
-        const root = createRoot(popupNode);
-
-        root.render(
-          <RainStationPopup
-            station={feature.properties}
-          />
-        );
-
-        footprintPopup.current.remove();
-
-        stationPopup.current
-          .setLngLat(feature.geometry.coordinates)
-          .setDOMContent(popupNode)
-          .addTo(map.current);
-
-      });
-
-      map.current.on("mouseenter", "rainfall-layer", () => {
-        map.current.getCanvas().style.cursor = "pointer";
-      });
-
-      map.current.on("mouseleave", "rainfall-layer", () => {
-        map.current.getCanvas().style.cursor = "";
-      });
-
+      }))
     };
+  }
 
-    if (!map.current.isStyleLoaded()) {
-      map.current.once("load", updateRainfallLayer);
-    } else {
-      updateRainfallLayer();
+  function updateStationLayer(
+    map,
+    layerId,
+    sourceId,
+    stations,
+    popupRef,
+    otherPopupRef
+  ) {
+    const geojson = buildStationGeoJSON(stations);
+
+    if (map.getSource(sourceId)) {
+      map.getSource(sourceId).setData(geojson);
+      return;
     }
 
-  }, [stations]);
+    map.addSource(sourceId, {
+      type: "geojson",
+      data: geojson,
+    });
+
+    map.addLayer({
+      id: layerId,
+      type: "circle",
+      source: sourceId,
+
+      paint: {
+        "circle-radius": [
+          "step",
+          ["get", "rainfallMm"],
+          5,
+          1, 7,
+          10, 9,
+          25, 11,
+          50, 13
+        ],
+
+        "circle-color": [
+          "step",
+          ["get", "rainfallMm"],
+          "#d6eaf8",
+          1, "#00e100",
+          10, "#ffff00",
+          25, "#ffaa00",
+          50, "#ff0000"
+        ],
+
+        "circle-opacity": 1,
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#ffffff"
+      }
+    });
+
+    map.on("mouseenter", layerId, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", layerId, () => {
+      map.getCanvas().style.cursor = "";
+    });
+
+    map.on("click", layerId, (e) => {
+
+      e.originalEvent.stopPropagation();
+
+      const feature = e.features[0];
+
+      const popupNode = document.createElement("div");
+
+      const root = createRoot(popupNode);
+
+      root.render(
+        <StationPopup
+          station={feature.properties}
+        />
+      );
+
+      otherPopupRef.current.remove();
+
+      popupRef.current
+        .setLngLat(feature.geometry.coordinates)
+        .setDOMContent(popupNode)
+        .addTo(map);
+    });
+  }
+
+  /* Render synoptic stations */
+  useEffect(() => {
+
+    if (!map.current) return;
+
+    const render = () => {
+
+      updateStationLayer(
+        map.current,
+        "synoptic-layer",
+        "synoptic-source",
+        synopticStations,
+        stationPopup,
+        footprintPopup
+      );
+
+      map.current.setLayoutProperty(
+        "synoptic-layer",
+        "visibility",
+        showSynoptic ? "visible" : "none"
+      );
+    };
+
+    if (!map.current.isStyleLoaded())
+      map.current.once("load", render);
+    else
+      render();
+
+  }, [synopticStations, showSynoptic]);
+
+  /* Render AWS stations */
+  useEffect(() => {
+
+    if (!map.current) return;
+
+    const render = () => {
+
+      updateStationLayer(
+        map.current,
+        "aws-layer",
+        "aws-source",
+        awsStations,
+        stationPopup,
+        footprintPopup
+      );
+
+      map.current.setLayoutProperty(
+        "aws-layer",
+        "visibility",
+        showAWS ? "visible" : "none"
+      );
+    };
+
+    if (!map.current.isStyleLoaded())
+      map.current.once("load", render);
+    else
+      render();
+
+  }, [awsStations, showAWS]);
 
   /* Rendered polygons */
   useEffect(() => {
@@ -205,8 +264,12 @@ function MapView({ stations, footprints }) {
           },
         });
         
-        if (map.current.getLayer("rainfall-layer")) {
-          map.current.moveLayer("rainfall-layer");
+        if (map.current.getLayer("synoptic-layer")) {
+          map.current.moveLayer("synoptic-layer");
+        }
+
+        if (map.current.getLayer("aws-layer")) {
+          map.current.moveLayer("aws-layer");
         }
 
         map.current.on("click", "footprints-fill", (e) => {
@@ -216,7 +279,7 @@ function MapView({ stations, footprints }) {
         const stations = map.current.queryRenderedFeatures(
           e.point,
           {
-            layers: ["rainfall-layer"]
+            layers: ["synoptic-layer", "aws-layer"]
           }
         );
 
@@ -271,6 +334,30 @@ function MapView({ stations, footprints }) {
 
       }
 
+      if (map.current.getLayer("footprints-fill")) {
+
+        map.current.setLayoutProperty(
+          "footprints-fill",
+          "visibility",
+          showFootprints
+            ? "visible"
+            : "none"
+        );
+
+      }
+
+      if (map.current.getLayer("footprints-outline")) {
+
+        map.current.setLayoutProperty(
+          "footprints-outline",
+          "visibility",
+          showFootprints
+            ? "visible"
+            : "none"
+        );
+
+      }
+
       // Fit map to polygons
       
       if (!hasFitBounds.current) {
@@ -286,8 +373,12 @@ function MapView({ stations, footprints }) {
       }
     };
 
-    if (map.current.getLayer("rainfall-layer")) {
-      map.current.moveLayer("rainfall-layer");
+    if (map.current.getLayer("synoptic-layer")) {
+      map.current.moveLayer("synoptic-layer");
+    }
+
+    if (map.current.getLayer("aws-layer")) {
+      map.current.moveLayer("aws-layer");
     }
 
     if (map.current.isStyleLoaded()) {
@@ -296,7 +387,7 @@ function MapView({ stations, footprints }) {
       map.current.once("load", addOrUpdateFootprints);
     }
 
-}, [footprints]);
+}, [footprints, showFootprints]);
 
 /* Clean up when the component unmounts */
 useEffect(() => {
@@ -307,14 +398,26 @@ useEffect(() => {
 }, []);
 
   return (
+  <>
+
+    <StationLayer
+      map={map}
+      popup={stationPopup}
+      stations={synopticStations}
+      layerId="synoptic-layer"
+      sourceId="synoptic-source"
+    />
+
     <div
       ref={mapContainer}
       style={{
         width: "100%",
-        height: "100%",
+        height: "100%"
       }}
     />
-  );
+
+  </>
+);
 }
 
 export default MapView;
