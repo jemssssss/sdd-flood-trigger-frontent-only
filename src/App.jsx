@@ -34,7 +34,7 @@ function App() {
         setStations(parsedStations);
 
         /* Load polygons/footprints */
-        const footprintResponse = await fetch("/data/s1a_footprints.geojson");
+        const footprintResponse = await fetch(`${import.meta.env.BASE_URL}/data/s1a_footprints.geojson`);
 
         if (!footprintResponse.ok) {
           throw new Error("Failed to load S1A footprint polygons.");
@@ -46,7 +46,7 @@ function App() {
 
         // Load predetermined footprint points
         
-        const sampleResponse = await fetch("/data/footprintSamplePoints.json");
+        const sampleResponse = await fetch(`${import.meta.env.BASE_URL}/data/footprintSamplePoints.json`);
 
         if (!sampleResponse.ok) {
           throw new Error("Failed to load footprint sample points.");
