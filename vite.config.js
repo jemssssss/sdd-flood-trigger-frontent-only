@@ -7,6 +7,5 @@ export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] })
-  ],
-  base: '/sdd-flood-trigger/'
+  ]
 })
