@@ -1,53 +1,44 @@
-import * as turf from "@turf/turf";
 import { fetchPointRainfall } from "../services/panahonApi";
 
-const SAMPLE_POINTS = 7;
+export async function sampleFootprint(
+  feature,
+  samplePoints,
+  forecastTime
+) {
 
-export async function sampleFootprint(feature, forecastTime) {
+  const tile = feature.properties.TileNumber;
 
-  const bbox = turf.bbox(feature);
+  const samples =
+    samplePoints.find(item => item.tile === tile);
 
-  const sampledPoints = [];
-
-  // Generate random points first
-  while (sampledPoints.length < SAMPLE_POINTS) {
-
-    const random = turf.randomPoint(1, { bbox });
-
-    const point = random.features[0];
-
-    if (!turf.booleanPointInPolygon(point, feature)) {
-      continue;
-    }
-
-    sampledPoints.push(point);
+  if (!samples) {
+    throw new Error(`No sample points for ${tile}`);
   }
 
-  // Fetch rainfall for all sampled points simultaneously
   const rainfallValues = await Promise.all(
 
-    sampledPoints.map(async (point) => {
-
-      const [lon, lat] = point.geometry.coordinates;
-
-      return fetchPointRainfall(
-        lat,
-        lon,
+    samples.samplePoints.map(point =>
+      fetchPointRainfall(
+        point.lat,
+        point.lon,
         forecastTime
-      );
-
-    })
+      )
+    )
 
   );
 
   const averageRainfall =
-    rainfallValues.reduce((sum, value) => sum + value, 0) /
+    rainfallValues.reduce((a, b) => a + b, 0) /
     rainfallValues.length;
 
   return {
+
     averageRainfall,
+
     rainfallValues,
-    sampledPoints
+
+    sampledPoints: samples.samplePoints
+
   };
 
 }

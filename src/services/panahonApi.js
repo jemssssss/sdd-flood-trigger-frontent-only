@@ -1,3 +1,5 @@
+const pointCache = new Map();
+
 export async function fetchRainSynop() {
 	const token = import.meta.env.VITE_PANAHON_API_TOKEN;
 
@@ -26,6 +28,12 @@ export async function fetchPointRainfall(lat, lon, time) {
     throw new Error("Missing VITE_PANAHON_API_TOKEN");
   }
 
+  const key = `${lat.toFixed(6)},${lon.toFixed(6)},${time}`;
+
+  if (pointCache.has(key)) {
+    return pointCache.get(key);
+  }
+
   const url =
     `https://www.panahon.gov.ph/api/v1/tiles/point` +
     `?url=prate` +
@@ -42,5 +50,10 @@ export async function fetchPointRainfall(lat, lon, time) {
 
   const data = await response.json();
 
-  return data.values?.[0] ?? 0;
+  const rainfall =
+  data.values?.[0] ?? 0;
+
+  pointCache.set(key, rainfall);
+
+  return rainfall;
 }

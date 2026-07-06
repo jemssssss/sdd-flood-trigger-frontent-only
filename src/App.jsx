@@ -44,39 +44,53 @@ function App() {
 
         console.log("S1A Footprints:", footprintData);
 
-        /* Compute average rainfall for every polygon */ 
-        for (const feature of footprintData.features) {
+        // Load predetermined footprint points
+        
+        const sampleResponse = await fetch("/data/footprintSamplePoints.json");
 
-          try {
-
-            const result = await sampleFootprint(
-              feature,
-              forecastTime
-            );
-
-            feature.properties.averageRainfall =
-              result.averageRainfall;
-
-            console.log(
-              feature.properties.TileNumber,
-              result.averageRainfall
-            );
-
-          }
-
-          catch (err) {
-
-            console.error(
-              "Sampling failed:",
-              feature.properties.TileNumber,
-              err
-            );
-
-            feature.properties.averageRainfall = null;
-
-          }
-
+        if (!sampleResponse.ok) {
+          throw new Error("Failed to load footprint sample points.");
         }
+
+        const samplePoints =
+          await sampleResponse.json();
+
+        /* Compute average rainfall for every polygon */ 
+        await Promise.all( 
+          footprintData.features.map(async feature => {
+
+            try {
+
+              const result = await sampleFootprint(
+                feature,
+                samplePoints,
+                forecastTime
+              );
+
+              feature.properties.averageRainfall =
+                result.averageRainfall;
+
+              console.log(
+                feature.properties.TileNumber,
+                result.averageRainfall
+              );
+
+            }
+
+            catch (err) {
+
+              console.error(
+                "Sampling failed:",
+                feature.properties.TileNumber,
+                err
+              );
+
+              feature.properties.averageRainfall = null;
+
+            }
+          
+          })
+        );
 
         console.table(
           footprintData.features.map(f => ({

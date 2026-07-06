@@ -1,13 +1,3 @@
-/**
- * Returns the latest available forecast hour in local time.
- *
- * Example:
- * 2026-07-02T16:37:25
- * -> 2026-07-02T15:00:00
- *
- * Uses the previous hour because weather products are often
- * published a short time after the top of the hour.
- */
 export function getLatestForecastTime() {
   const now = new Date();
 
@@ -27,15 +17,20 @@ export function getLatestForecastTime() {
 export function getLatestTimeDate() {
   const now = new Date();
 
-  // Round down
+  // Round down to the nearest hour
   now.setMinutes(0);
   now.setSeconds(0);
   now.setMilliseconds(0);
 
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hour = String(now.getHours()).padStart(2, "0");
+  // Format the date using Intl.DateTimeFormat
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    month: "long",   
+    day: "numeric",  
+    year: "numeric", 
+    hour: "numeric", 
+    minute: "2-digit", 
+    hour12: true     
+  });
 
-  return `${year}-${month}-${day} ${hour}:00:00`;
+  return formatter.format(now).replace(",", "");
 }
