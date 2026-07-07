@@ -1,7 +1,7 @@
 import fs from "fs";
 import * as turf from "@turf/turf";
 
-const SAMPLE_POINTS = 15;
+const SAMPLE_POINTS = Number(import.meta.env.SAMPLING_POINTS ?? 15);
 
 const geojson = JSON.parse(
   fs.readFileSync("./public/data/s1a_footprints.geojson", "utf8")

@@ -57,7 +57,7 @@ function LayerControl({
 						}
 					/>
 
-					Sentinel-1 Footprints
+					Sentinel-1A Footprints
 
 				</label>
 

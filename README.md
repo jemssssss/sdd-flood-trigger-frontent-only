@@ -277,6 +277,104 @@ Visualized using:
 
 ---
 
+# Raw API Response
+
+Example Synoptic rainfall station response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "site_id": "132",
+      "site_name": "ITBAYAT, BATANES",
+      "lat": "20.79000758",
+      "lon": "121.8396475",
+      "value": "0",
+      "parameter": "rain",
+      "observed_at": "2026-06-30 14:00:00",
+      "readable_parameter": "3 Hourly Rain",
+      "readable_unit": "mm"
+    }
+  ]
+}
+```
+
+Example AWS rainfall station response:
+
+```json
+{
+	"success":true,
+	"data": [
+		{
+			"site_id":"98",
+			"site_name":"Science Garden, Quezon City",
+			"lat":14.645101,
+			"lon":121.044258,
+			"parameter":"accumulated_rain_1h",
+			"readable_parameter":"Hourly Rain",
+			"readable_unit":"mm",
+			"observed_at":"2026-07-06 14:40:00",
+			"value":"0",
+			"24_hr_value":"0"
+		}
+	]
+}	
+```
+
+---
+
+# Normalized Rainfall Station Object
+
+Before visualization, the API response is converted into a standardized format.
+
+Example normalized Synoptic rainfall station response:
+
+```javascript
+{
+  id: "132",
+  stationName: "ITBAYAT, BATANES",
+  latitude: 20.79000758,
+  longitude: 121.8396475,
+  rainfallMm: 0,
+  observedAt: "2026-06-30 14:00:00",
+  raw: { ... }
+}
+```
+
+Example normalized AWS rainfall station response:
+
+```javascript
+{
+  id: "98",
+  latitude: 14.645101,
+  longitude: 121.044258,
+  rainfallMm: 0,
+  observedAt: "2026-06-30 14:00:00",
+  raw: { ... },
+	readableUnit: "mm",
+	stationName: "Science Garden, Quezon City",
+	stationType: "aws"
+}
+```
+
+---
+
+# API Field Mapping
+
+| Panahon API | Parsed Field | Description |
+|-------------|--------------|-------------|
+| `site_id` | `id` | Station identifier |
+| `site_name` | `stationName` | Station name |
+| `lat` | `latitude` | Latitude |
+| `lon` | `longitude` | Longitude |
+| `value` | `rainfallMm` | Rainfall amount (millimeters) |
+| `observed_at` | `observedAt` | Observation timestamp |
+
+The original API response is preserved in the `raw` property.
+
+---
+
 # Sentinel-1 Footprints
 
 Sentinel-1 acquisition footprints are loaded from:

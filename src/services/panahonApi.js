@@ -44,14 +44,14 @@ export async function fetchAWSRain() {
   return response.json();
 }
 
-export async function fetchPointRainfall(lat, lon, time) {
+export async function fetchPointRainfall(lat, lon, forecastTime, initTime) {
   const token = import.meta.env.VITE_PANAHON_API_TOKEN;
 
   if (!token) {
     throw new Error("Missing VITE_PANAHON_API_TOKEN");
   }
 
-  const key = `${lat.toFixed(6)},${lon.toFixed(6)},${time}`;
+  const key = `${lat.toFixed(6)},${lon.toFixed(6)},${forecastTime},${initTime}`;
 
   if (pointCache.has(key)) {
     return pointCache.get(key);
@@ -59,10 +59,11 @@ export async function fetchPointRainfall(lat, lon, time) {
 
   const url =
     `https://www.panahon.gov.ph/api/v1/tiles/point` +
-    `?url=prate` +
+    `?url=prate_accum` +
     `&lat=${lat}` +
     `&lon=${lon}` +
-    `&t=${encodeURIComponent(time)}` +
+    `&t=${encodeURIComponent(forecastTime)}` +
+    `&init=${encodeURIComponent(initTime)}` +
     `&token=${token}`;
 
   const response = await fetch(url);

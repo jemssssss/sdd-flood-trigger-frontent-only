@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { fetchRainSynop, fetchAWSRain } from "./services/panahonApi";
 import { parseRainStations } from "./utils/rainParser";
 import { sampleFootprint } from "./utils/footprintSampler";
-import { getLatestForecastTime } from "./utils/timeUtils";
+import { getAccumulationTimes } from "./utils/timeUtils";
 
 function App() {
 
@@ -19,8 +19,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const forecastTime = getLatestForecastTime();
-  console.log("Using forecast time:", forecastTime);
+  const { forecastTime, initTime, hour } = getAccumulationTimes();
+  console.log("Accumulation hour:", hour);
+  console.log("Forecast time:", forecastTime);
+  console.log("Init time:", initTime);
 
   useEffect(() => {
     /* Loading, Error, and Empty States */
@@ -80,7 +82,8 @@ function App() {
               const result = await sampleFootprint(
                 feature,
                 samplePoints,
-                forecastTime
+                forecastTime,
+                initTime
               );
 
               feature.properties.averageRainfall =
