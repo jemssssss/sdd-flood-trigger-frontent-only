@@ -240,7 +240,7 @@ Observed AWS stations:
 /api/v1/aws?parameter=accumulated_rain_1h
 ```
 
-Represents **average hourly accumulated rainfall from the past 24 hours**.
+Represents **24-hour accumulated rainfall**.
 
 Although the endpoint returns hourly rainfall, this dashboard visualizes the **24_hr_value** field.
 
