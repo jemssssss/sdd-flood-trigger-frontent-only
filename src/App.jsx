@@ -198,7 +198,7 @@ function App() {
             <FloodSummary
 
               summary={floodSummary}
-              
+
             />
 
             <MapView

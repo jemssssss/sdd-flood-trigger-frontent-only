@@ -3,7 +3,6 @@ import "../styles/App.css";
 function FloodSummary({ summary }) {
 
   return (
-
     <div className="flood-summary">
 
       <h3>Flood Summary</h3>
@@ -20,11 +19,16 @@ function FloodSummary({ summary }) {
 
         {summary.moderate.length > 0 ? (
 
-          <ul>
+          <div className="tile-container">
             {summary.moderate.map(tile => (
-              <li key={tile}>{tile}</li>
+              <span
+                key={tile}
+                className="tile-chip"
+              >
+                {tile}
+              </span>
             ))}
-          </ul>
+          </div>
 
         ) : (
 
@@ -48,11 +52,16 @@ function FloodSummary({ summary }) {
 
         {summary.heavy.length > 0 ? (
 
-          <ul>
+          <div className="tile-container">
             {summary.heavy.map(tile => (
-              <li key={tile}>{tile}</li>
+              <span
+                key={tile}
+                className="tile-chip"
+              >
+                {tile}
+              </span>
             ))}
-          </ul>
+          </div>
 
         ) : (
 
@@ -65,7 +74,6 @@ function FloodSummary({ summary }) {
       </div>
 
     </div>
-
   );
 
 }
