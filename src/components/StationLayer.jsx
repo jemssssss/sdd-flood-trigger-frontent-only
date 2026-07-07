@@ -69,9 +69,8 @@ function StationLayer({
               ["get", "rainfallMm"],
               5,
               1, 7,
-              10, 9,
-              25, 11,
-              50, 13
+              60, 11,
+              180, 13
             ],
 
             "circle-color": [
@@ -79,9 +78,8 @@ function StationLayer({
               ["get", "rainfallMm"],
               "#d6eaf8",
               1, "#00e100",
-              10, "#ffff00",
-              25, "#ffaa00",
-              50, "#ff0000"
+              60, "#ffaa00",
+              180, "#ff0000"
             ],
 
             "circle-opacity": 1,

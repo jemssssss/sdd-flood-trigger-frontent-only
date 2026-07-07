@@ -2,6 +2,7 @@ import "./styles/App.css";
 import MapView from "./components/MapView";
 import LayerControl from "./components/LayerControl";
 import RainLegend from "./components/RainLegend";
+import FloodSummary from "./components/FloodSummary";
 import { useEffect, useState } from "react";
 import { fetchRainSynop, fetchAWSRain } from "./services/panahonApi";
 import { parseRainStations } from "./utils/rainParser";
@@ -13,6 +14,7 @@ function App() {
   const [synopticStations, setSynopticStations] = useState([]);
   const [awsStations, setAwsStations] = useState([]);
   const [footprints, setFootprints] = useState(null);
+  const [floodSummary, setFloodSummary] = useState({moderate: [], heavy: []});
   const [showSynoptic, setShowSynoptic] = useState(true);
   const [showAWS, setShowAWS] = useState(true);
   const [showFootprints, setShowFootprints] = useState(true);
@@ -118,6 +120,26 @@ function App() {
           }))
         );
 
+        const summary = {moderate: [], heavy: []};
+        footprintData.features.forEach(feature => {
+
+          const rainfall = feature.properties.averageRainfall ?? 0;
+          const tile = feature.properties.TileNumber;
+
+          if (rainfall >= 60 && rainfall <= 180) {
+            summary.moderate.push(tile);
+          }
+          else if (rainfall > 180) {
+            summary.heavy.push(tile);
+          }
+
+        });
+
+        summary.moderate.sort();
+        summary.heavy.sort();
+
+        setFloodSummary(summary);
+
         setFootprints(footprintData);
       } catch (err) {
         console.error(err);
@@ -171,6 +193,12 @@ function App() {
               showFootprints={showFootprints}
               setShowFootprints={setShowFootprints}
 
+            />
+
+            <FloodSummary
+
+              summary={floodSummary}
+              
             />
 
             <MapView

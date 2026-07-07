@@ -18,11 +18,12 @@ A web-based rainfall visualization dashboard built with **React**, **Vite**, and
 - Layer control panel for toggling:
   - Synoptic Stations
   - AWS Stations
-  - Sentinel-1 Footprints
+  - Sentinel-1A Footprints
 - Displays Sentinel-1 footprint polygons
-- Computes average forecast rainfall for every footprint
+- Computes average 24-hour accumulated forecast rainfall for every footprint
 - Uses pre-generated sampling points for reproducible rainfall averaging
 - Parallel rainfall sampling using `Promise.all()`
+- Summarizes list of Sentinel-1A tiles showing signs of flooding
 - Color-coded rainfall stations
 - Color-coded footprint polygons
 - Interactive station popups
@@ -79,7 +80,11 @@ Create a `.env` file.
 
 ```env
 VITE_PANAHON_API_TOKEN=YOUR_API_TOKEN
+SENSING_TIME=sensing_time_here
+SAMPLING_POINTS=sample_points_here
 ```
+
+Sensing time and sampling points are variables that can be changed according to the user's needs.
 
 Obtain a valid Panahon API token from your project supervisor.
 
@@ -97,6 +102,8 @@ A sample `.env.example` may be committed.
 
 ```env
 VITE_PANAHON_API_TOKEN=
+SENSING_TIME=
+SAMPLING_POINTS=
 ```
 
 ---
@@ -156,6 +163,7 @@ src/
 │   │   └── stationLayer.jsx
 │   │
 │   ├── LayerControl.jsx
+│   ├── FloodSummary.jsx
 │   ├── FootprintPopup.jsx
 │   ├── MapView.jsx
 │   ├── RainLegend.jsx
@@ -231,6 +239,8 @@ Observed AWS stations:
 ```text
 /api/v1/aws?parameter=accumulated_rain_1h
 ```
+
+Represents **average hourly accumulated rainfall from the past 24 hours**.
 
 Although the endpoint returns hourly rainfall, this dashboard visualizes the **24_hr_value** field.
 
@@ -322,6 +332,15 @@ Example AWS rainfall station response:
 }	
 ```
 
+Example footprint sample point response:
+
+```json
+{
+  "coordinates": [118.480028433565, 6.99440848821885],
+  "values": [1.7]
+}
+```
+
 ---
 
 # Normalized Rainfall Station Object
@@ -375,9 +394,9 @@ The original API response is preserved in the `raw` property.
 
 ---
 
-# Sentinel-1 Footprints
+# Sentinel-1A Footprints
 
-Sentinel-1 acquisition footprints are loaded from:
+Sentinel-1A acquisition footprints are loaded from:
 
 ```
 public/data/s1a_footprints.geojson
@@ -385,7 +404,7 @@ public/data/s1a_footprints.geojson
 
 Each footprint:
 
-- displays average forecast rainfall
+- displays forecasted total rainfall accumulated over the past 24 hours from sensing time
 - is color-coded
 - supports interactive popups
 
@@ -430,7 +449,7 @@ The dashboard includes a control panel that allows users to independently toggle
 
 - Synoptic Stations
 - AWS Stations
-- Sentinel-1 Footprints
+- Sentinel-1A Footprints
 
 Layer visibility is managed using MapLibre's `layout.visibility` property without reloading map sources.
 
@@ -446,6 +465,10 @@ Clicking either a Synoptic or AWS station displays:
 - Latitude
 - Longitude
 
+![Synoptic Station Popup](/docs/synoptic_popup.png)
+
+![AWS Station Popup](/docs/aws_popup.png)
+
 The rainfall label automatically changes depending on station type:
 
 - Synoptic → **Rainfall (3h)**
@@ -455,10 +478,15 @@ The rainfall label automatically changes depending on station type:
 
 # Footprint Popups
 
-Clicking a Sentinel-1 footprint displays:
+Clicking a Sentinel-1A footprint displays:
 
-- Tile Number
-- Average Forecast Rainfall (mm)
+- Sentinel Tile Number
+- Forecasted Date
+- Sensing Time (AM/PM)
+- Sampling Points Used
+- Forecast Accumulated Rainfall (mm)
+
+![Sentinel-1A Footprint Popup](/docs/footprint_popup.png)
 
 ---
 

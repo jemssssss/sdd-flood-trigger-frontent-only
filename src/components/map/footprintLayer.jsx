@@ -32,9 +32,8 @@ export function updateFootprintLayer({
           ["coalesce", ["get", "averageRainfall"], 0],
           "#eef7ff",
           1, "#00e100",
-          10, "#ffff00",
-          25, "#ffaa00",
-          50, "#ff0000"
+          60, "#ffaa00",
+          180, "#ff0000"
         ],
         "fill-opacity": 0.30
       },
@@ -102,9 +101,8 @@ export function updateFootprintLayer({
       ["coalesce", ["get", "averageRainfall"], 0],
       "#eef7ff",
       1, "#00e100",
-      10, "#ffff00",
-      25, "#ffaa00",
-      50, "#ff0000"
+      60, "#ffaa00",
+      180, "#ff0000"
     ]
   );
 
