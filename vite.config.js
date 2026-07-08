@@ -8,5 +8,5 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
-  base: '/sdd-flood-trigger/',
+  base: '/sdd-flood-trigger-frontent-only/',
 })

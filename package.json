@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://jemssssss.github.io/sdd-flood-trigger",
+  "homepage": "https://github.com/jemssssss/sdd-flood-trigger-frontent-only",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
