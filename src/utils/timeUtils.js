@@ -1,4 +1,4 @@
-const ACCUMULATION_HOUR = Number(import.meta.env.SENSING_TIME ?? 10); 
+const ACCUMULATION_HOUR = Number(import.meta.env.SENSING_TIME ?? 6); 
 
 export function getAccumulationTimes() {
 
