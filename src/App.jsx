@@ -33,7 +33,7 @@ function App() {
       setError(null);
 
       try {
-        /* Load synoptic and AWS rainfall stations */
+        /* Load rainfall stations */
         const [ synopticResponse, awsResponse ] = await Promise.all([ fetchRainSynop(), fetchAWSRain() ]);
 
         const parsedSynoptic = parseRainStations(
